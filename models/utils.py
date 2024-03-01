@@ -206,6 +206,7 @@ class VideoStreamer:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             image_file = str(self.listing[self.i])
+            print(image_file)
             image = self.load_image(image_file)
         self.i = self.i + 1
         return (image, True)
@@ -234,6 +235,8 @@ class VideoStreamer:
 
     def cleanup(self):
         self._ip_running = False
+
+
 
 # --- PREPROCESSING ---
 

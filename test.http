@@ -1,1 +1,6 @@
+###
 GET http://127.0.0.1:5000/api/images
+###
+GET http://127.0.0.1:5000/api/run_match?imageName=buildings04.png
+###
+GET http://127.0.0.1:5000/api/results

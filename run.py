@@ -19,9 +19,10 @@ torch.set_grad_enabled(False)
 
 
 class OptSuperGlue:
-    def __init__(self, input, output_dir, image_glob=['*.png', '*.jpg', '*.jpeg'], skip=1, max_length=1000000,
-                 resize=[320, 240], superglue='indoor', max_keypoints=-1, keypoint_threshold=0.005, nms_radius=4,
+    def __init__(self, input, output_dir,wait_match_img=None, image_glob=['*.png', '*.jpg', '*.jpeg'], skip=1, max_length=1000000,
+                 resize=[256, 256], superglue='indoor', max_keypoints=-1, keypoint_threshold=0.005, nms_radius=4,
                  sinkhorn_iterations=20, match_threshold=0.2, show_keypoints=False, no_display=True, force_cpu=False, ):
+        self.wait_match_img = wait_match_img
         self.skip = skip
         self.input = input
         self.output_dir = output_dir
@@ -37,6 +38,7 @@ class OptSuperGlue:
         self.show_keypoints = show_keypoints
         self.no_display = no_display
         self.force_cpu = force_cpu
+
 
 
 class OptMatch:
@@ -99,6 +101,9 @@ def superglue(opt):
     vs = VideoStreamer(opt.input, opt.resize, opt.skip,
                        opt.image_glob, opt.max_length)
     frame, ret = vs.next_frame()
+    if opt.wait_match_img is not None:
+        frame = vs.load_image(opt.wait_match_img)
+
     assert ret, 'Error when reading the first frame (try different --input?)'
 
     frame_tensor = frame2tensor(frame, device)
@@ -164,7 +169,7 @@ def superglue(opt):
         out = make_matching_plot_fast(
             last_frame, frame, kpts0, kpts1, mkpts0, mkpts1, color, text,
             path=None, show_keypoints=opt.show_keypoints, small_text=small_text)
-
+        # 设置显示窗口
         if not opt.no_display:
             cv2.imshow('SuperGlue matches', out)
             key = chr(cv2.waitKey(1) & 0xFF)
@@ -492,9 +497,9 @@ def match(opt):
 
 
 if __name__ == '__main__':
-    opt = OptSuperGlue('assets/buildings', 'dump_demo_sequence')
-    opt.super_glue = 'outdoor'
-    opt.image_glob = ['*.tif']
+    opt = OptSuperGlue('images', 'static/result')
+    opt.superglue = 'outdoor'
+    opt.wait_match_img = 'images/buildings08.png'
     superglue(opt)
     # opt1 = OptMatch('assets/scannet_sample_pairs_with_gt.txt', 'assets/scannet_sample_images/', 'dump_match_pairs/')
     # match(opt1)
