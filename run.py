@@ -19,7 +19,8 @@ torch.set_grad_enabled(False)
 
 
 class OptSuperGlue:
-    def __init__(self, input, output_dir,wait_match_img=None, image_glob=['*.png', '*.jpg', '*.jpeg'], skip=1, max_length=1000000,
+    def __init__(self, input, output_dir, wait_match_img=None, image_glob=['*.png', '*.jpg', '*.jpeg'], skip=1,
+                 max_length=1000000,
                  resize=[256, 256], superglue='indoor', max_keypoints=-1, keypoint_threshold=0.005, nms_radius=4,
                  sinkhorn_iterations=20, match_threshold=0.2, show_keypoints=False, no_display=True, force_cpu=False, ):
         self.wait_match_img = wait_match_img
@@ -38,7 +39,6 @@ class OptSuperGlue:
         self.show_keypoints = show_keypoints
         self.no_display = no_display
         self.force_cpu = force_cpu
-
 
 
 class OptMatch:
@@ -497,9 +497,14 @@ def match(opt):
 
 
 if __name__ == '__main__':
-    opt = OptSuperGlue('images', 'static/result')
-    opt.superglue = 'outdoor'
-    opt.wait_match_img = 'images/buildings08.png'
-    superglue(opt)
-    # opt1 = OptMatch('assets/scannet_sample_pairs_with_gt.txt', 'assets/scannet_sample_images/', 'dump_match_pairs/')
-    # match(opt1)
+    # opt = OptSuperGlue('images', 'static/result')
+    # opt.superglue = 'outdoor'
+    # opt.wait_match_img = 'images/buildings08.png'
+    # superglue(opt)
+    opt1 = OptMatch('assets/scannet_sample_pairs_with_gt.txt', 'assets/scannet_sample_images/', 'dump_match_pairs/')
+    opt1.viz = True
+    opt1.fast_viz = True
+    opt1.opencv_display = True
+    #opt1.eval = True
+
+    match(opt1)

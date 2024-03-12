@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+import shutil
 
 from flask import Flask, send_file, Response
 from flask import request
@@ -29,63 +30,16 @@ class ApiResponse(Schema):
     data = List(Nested(ImageSchema))
 
 
-def initDB():
-    conn = sqlite3.connect('images.db')
-    cur = conn.cursor()
-    sql_text_1 = '''
-    CREATE TABLE "Imgs" (
-        "name" TEXT
-     );
-     '''
-    # 执行sql语句
-    cur.execute(sql_text_1)
-
-
-def insert_result():
-    conn = sqlite3.connect('results.db')
-    cur = conn.cursor()
-    uploads = 'E://Ideaproject//SuperGluePretrainedNetwork-master/static/result'
-    # 遍历文件夹中的所有文件
-    for filename in os.listdir(uploads):
-        sql_text_2 = '''INSERT INTO Imgs VALUES(?);'''
-        cur.execute(sql_text_2, (filename,))
-        conn.commit()
-
-
-def findAll():
-    conn = sqlite3.connect('images.db')
-    cur = conn.cursor()
-    cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = cur.fetchall()
-    print("数据库中的表有：", tables)
-    # 获取特定表的结构
-    cur.execute(f"PRAGMA table_info(Imgs);")
-    table_info = cur.fetchall()
-    print(f"表z的结构为：", table_info)
-    sql_text_1 = '''SELECT * FROM Imgs'''
-    cur.execute(sql_text_1)
-    records = cur.fetchall()
-    for record in records:
-        print(record)
-    conn.close()
-
-
-@app.post('/upload')
-def upload_file(json_data):
-    conn = sqlite3.connect('images.db')
-    cur = conn.cursor()
-    images = json_data['images']
+@app.post('/api/upload')
+def upload_file():
+    images = request.files.getlist('image')
     filenames = []
     for image in images:
-        file = FileStorage(image['image'])
-        filename = file.filename
-        file.save(filename)
-        filenames.append(filename)
-    file = request.files['file']
-    file.save('images/' + file.filename)
+        image.save('static/images/' + image.filename)
+    insert_images()
     return {
-        'message': 'Images uploaded successfully.',
-        'filenames': filenames
+        'msg': 'Images uploaded successfully.',
+        'data': filenames
     }
 
 
@@ -96,8 +50,9 @@ def match_img():
     uploaded_file = request.files['image']
     uploaded_file.save('match/' + uploaded_file.filename)
     return {
-        'message': 'Images uploaded successfully.',
-        'filenames': uploaded_file.filename
+        'code': 200,
+        'msg': 'Images uploaded successfully.',
+        'data': uploaded_file.filename
     }
 
 
@@ -119,9 +74,31 @@ def run_match():
     superglue(opt)
     insert_result()
     return {
-        'msg': 'Images uploaded successfully.',
+        'msg': 'success',
         'code': '200'
     }
+
+
+def insert_result():
+    conn = sqlite3.connect('results.db')
+    cur = conn.cursor()
+    uploads = 'E://Ideaproject//SuperGluePretrainedNetwork-master/static/result'
+    # 遍历文件夹中的所有文件
+    for filename in os.listdir(uploads):
+        sql_text_2 = '''INSERT INTO Imgs VALUES(?);'''
+        cur.execute(sql_text_2, (filename,))
+        conn.commit()
+
+
+def insert_images():
+    conn = sqlite3.connect('images.db')
+    cur = conn.cursor()
+    uploads = 'E://Ideaproject//SuperGluePretrainedNetwork-master/static/images'
+    # 遍历文件夹中的所有文件
+    for filename in os.listdir(uploads):
+        sql_text_2 = '''INSERT INTO Imgs VALUES(?);'''
+        cur.execute(sql_text_2, (filename,))
+        conn.commit()
 
 
 @app.get('/api/images')
@@ -170,8 +147,35 @@ def get_results():
     }
 
 
+@app.get('/api/delAllimg')
+@app.output(ApiResponse)
+def del_all_img():
+    folder_path = 'E:\Ideaproject\SuperGluePretrainedNetwork-master\static\images'
+    conn = sqlite3.connect('images.db')
+    cur = conn.cursor()
+    # 执行sql语句
+    cur.execute('DELETE FROM Imgs')
+    conn.commit()
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('删除 %s 时出错。原因: %s' % (file_path, e))
+            return {
+                'code': 1001,
+                'msg': '删除失败：' + str(e),
+                'data': ''
+            }
+    return {
+        'code': 200,
+        'msg': 'SUCCESS',
+        'data': ''
+    }
+
+
 if __name__ == '__main__':
-    # initDB()
-    # insert()
-    # findAll()
     app.run()
