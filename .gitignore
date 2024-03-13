@@ -2,4 +2,5 @@
 *.DS_Store
 *.swp
 ./static/
-./assets
+./assets/
+./.venv/
